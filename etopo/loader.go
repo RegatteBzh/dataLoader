@@ -41,9 +41,9 @@ func Loader(file io.Reader, width int, height int, c *redis.Client, redisName st
 		}
 
 		for column, altitude := range data {
-			lat := 90 - float64(180)*float64(column)/float64(height-1)
-			if altitude > threshold && lat >= -85 && lat <= 85 {
-				lon := float64(360)*float64(line)/float64(width-1) - 180
+			lat := 90 - float64(180)*float64(line)/float64(height-1)
+			if /*altitude > threshold &&*/ lat >= -85 && lat <= 85 {
+				lon := float64(360)*float64(column)/float64(width-1) - 180
 				loc := redis.GeoLocation{
 					Longitude: lon,
 					Latitude:  lat,
