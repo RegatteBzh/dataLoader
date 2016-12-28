@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/spf13/viper"
-	redis "gopkg.in/redis.v3"
+	redis "gopkg.in/redis.v4"
 )
 
 // Open create a redis client

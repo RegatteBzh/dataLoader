@@ -10,7 +10,7 @@ import (
 
 	"github.com/sethgrid/multibar"
 
-	"gopkg.in/redis.v3"
+	"gopkg.in/redis.v4"
 )
 
 // DATASIZE is the size of one datum
@@ -30,7 +30,7 @@ func Loader(file io.Reader, width int, height int, c *redis.Client, redisName st
 
 		// read line in file
 		if _, err = file.Read(fileLine); err != nil {
-			log.Fatal("etopo1: file.Read failed\n", err)
+			log.Fatal(redisName+": file.Read failed\n", err)
 		}
 
 		// convert in an array of int16

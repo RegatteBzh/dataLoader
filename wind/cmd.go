@@ -1,6 +1,7 @@
 package wind
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -52,6 +53,8 @@ var MainCmd = &cobra.Command{
 
 		if !fake {
 			go progressBars.Listen()
+		} else {
+			fmt.Printf("Fake mode.\n")
 		}
 
 		err = Loader(file, client, viper.GetString("wind_name"), progressBar, fake)

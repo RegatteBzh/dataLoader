@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/sethgrid/multibar"
-	redis "gopkg.in/redis.v3"
+	redis "gopkg.in/redis.v4"
 )
 
 // Speed is the speed of the wind (m/sec)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/sethgrid/multibar"
 
-	"gopkg.in/redis.v3"
+	"gopkg.in/redis.v4"
 )
 
 // ETOPO1WIDTH is the length of a data line in bytes
