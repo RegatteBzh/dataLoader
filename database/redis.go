@@ -1,12 +1,15 @@
 package database
 
-import redis "gopkg.in/redis.v3"
+import (
+	"github.com/spf13/viper"
+	redis "gopkg.in/redis.v3"
+)
 
 // Open create a redis client
 func Open() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     viper.GetString("redis_host") + ":" + viper.GetString("redis_port"),
+		Password: viper.GetString("redis_password"),
+		DB:       0, // use default DB
 	})
 }

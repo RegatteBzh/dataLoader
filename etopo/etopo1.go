@@ -15,6 +15,6 @@ const ETOPO1WIDTH = 21601
 const ETOTO1HEIGHT = 10801
 
 // Loader1Minute load Etopo 1 minute data to Redis
-func Loader1Minute(file io.Reader, c *redis.Client, redisName string, threshold int16, progressBar multibar.ProgressFunc) error {
-	return Loader(file, ETOPO1WIDTH, ETOTO1HEIGHT, c, redisName, threshold, progressBar)
+func Loader1Minute(file io.Reader, c *redis.Client, redisName string, threshold int16, progressBar multibar.ProgressFunc, fake bool) error {
+	return Loader(file, ETOPO1WIDTH, ETOTO1HEIGHT, c, redisName, threshold, progressBar, fake)
 }

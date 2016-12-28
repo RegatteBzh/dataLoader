@@ -15,6 +15,12 @@ func init() {
 
 	flags.Int64("etopo-threshold", 0, "Altitude for ground limit in meter")
 	viper.BindPFlag("etopo_threshold", flags.Lookup("etopo-threshold"))
+
+	flags.String("etopo-name", "etopo", "Redis key name to store data")
+	viper.BindPFlag("etopo_name", flags.Lookup("etopo-name"))
+
+	flags.Bool("fake", false, "Do not write into redis. Just display")
+	viper.BindPFlag("fake", flags.Lookup("fake"))
 }
 
 // MainCmd is the main command manager
@@ -22,6 +28,8 @@ var MainCmd = &cobra.Command{
 	Use:   "etopo <path>",
 	Short: "Load etopo 1 minute grid path",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		fake := viper.GetBool("fake")
 
 		client := database.Open()
 		defer client.Close()
@@ -43,9 +51,10 @@ var MainCmd = &cobra.Command{
 		}
 		defer file.Close()
 
-		go progressBars.Listen()
+		if !fake {
+			go progressBars.Listen()
+		}
 
-		err = Loader1Minute(file, client, "etopo", int16(viper.GetInt64("etopo_threshold")), progressBar)
-
+		err = Loader1Minute(file, client, viper.GetString("etopo_name"), int16(viper.GetInt("etopo_threshold")), progressBar, fake)
 	},
 }

@@ -3,6 +3,7 @@ package etopo
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -16,12 +17,14 @@ import (
 const DATASIZE = 2 // sizeof int16
 
 // Loader load Etopo data to Redis
-func Loader(file io.Reader, width int, height int, c *redis.Client, redisName string, threshold int16, progressBar multibar.ProgressFunc) (err error) {
+func Loader(file io.Reader, width int, height int, c *redis.Client, redisName string, threshold int16, progressBar multibar.ProgressFunc, fake bool) (err error) {
 	fileLine := make([]byte, width*DATASIZE)
 
 	c.Del(redisName)
 
-	progressBar(0)
+	if !fake {
+		progressBar(0)
+	}
 
 	for line := 0; line < height; line++ {
 
@@ -38,18 +41,25 @@ func Loader(file io.Reader, width int, height int, c *redis.Client, redisName st
 		}
 
 		for column, altitude := range data {
-			if altitude > threshold {
-				lat := 90 - float64(180)*float64(column)/float64(height-1)
+			lat := 90 - float64(180)*float64(column)/float64(height-1)
+			if altitude > threshold && lat >= -85 && lat <= 85 {
 				lon := float64(360)*float64(line)/float64(width-1) - 180
 				loc := redis.GeoLocation{
 					Longitude: lon,
 					Latitude:  lat,
 					Name:      strconv.Itoa(int(altitude)),
 				}
-				c.GeoAdd(redisName, &loc)
+				if !fake {
+					c.GeoAdd(redisName, &loc)
+				} else {
+					fmt.Printf("[%.03f, %.03f] %s\n", loc.Longitude, loc.Latitude, loc.Name)
+				}
 			}
 		}
-		progressBar(line)
+
+		if !fake {
+			progressBar(line)
+		}
 	}
 
 	return

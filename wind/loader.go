@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 
@@ -57,7 +58,7 @@ func readBlock(file io.Reader) (count uint32, winds []float32, err error) {
 }
 
 // Loader reads wind from binary file and store to redis
-func Loader(file io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc) (err error) {
+func Loader(file io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc, fake bool) (err error) {
 	countU, windsU, err := readBlock(file)
 	countV, windsV, err := readBlock(file)
 
@@ -82,32 +83,41 @@ func Loader(file io.Reader, c *redis.Client, redisName string, progressBar multi
 			log.Fatal("Cannot convert wind speed to json")
 		}
 
-		if lon >= 180 {
-			// lon[180 - 359] => x=[0-179]
-			loc := redis.GeoLocation{
-				Longitude: float64(lon) - 180,
-				Latitude:  float64(lat),
-				Name:      string(jsonSpeed),
-			}
-			c.GeoAdd(redisName, &loc)
+		var loc redis.GeoLocation
+		if lat >= -85 && lat <= 85 {
+			if lon >= 180 {
+				// lon[180 - 359] => x=[0-179]
+				loc = redis.GeoLocation{
+					Longitude: float64(lon) - 360,
+					Latitude:  float64(lat),
+					Name:      string(jsonSpeed),
+				}
 
-		} else {
-			// lon[0 - 179] => x=[180-359]
-			loc := redis.GeoLocation{
-				Longitude: float64(lon) + 180,
-				Latitude:  float64(lat),
-				Name:      string(jsonSpeed),
+			} else {
+				// lon[0 - 179] => x=[180-359]
+				loc = redis.GeoLocation{
+					Longitude: float64(lon),
+					Latitude:  float64(lat),
+					Name:      string(jsonSpeed),
+				}
 			}
-			c.GeoAdd(redisName, &loc)
+
+			if !fake {
+				c.GeoAdd(redisName, &loc)
+			} else {
+				fmt.Printf("[%.03f, %.03f] %s\n", loc.Longitude, loc.Latitude, loc.Name)
+			}
 		}
 
-		lon = lon + 1
+		lon++
 
 		if lon >= 360 {
 			lat--
 			lon = 0
 			progress++
-			progressBar(progress)
+			if !fake {
+				progressBar(progress)
+			}
 		}
 	}
 

@@ -7,10 +7,17 @@ import (
 	"github.com/regattebzh/dataLoader/database"
 	"github.com/sethgrid/multibar"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init() {
-	//flags := MainCmd.Flags()
+	flags := MainCmd.Flags()
+
+	flags.String("wind-name", "wind", "Redis key name to store data")
+	viper.BindPFlag("wind_name", flags.Lookup("wind-name"))
+
+	flags.Bool("fake", false, "Do not write into redis. Just display")
+	viper.BindPFlag("fake", flags.Lookup("fake"))
 
 }
 
@@ -19,6 +26,8 @@ var MainCmd = &cobra.Command{
 	Use:   "wind <path>",
 	Short: "Load wind forecast",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		fake := viper.GetBool("fake")
 
 		client := database.Open()
 		defer client.Close()
@@ -41,9 +50,11 @@ var MainCmd = &cobra.Command{
 		}
 		defer file.Close()
 
-		go progressBars.Listen()
+		if !fake {
+			go progressBars.Listen()
+		}
 
-		err = Loader(file, client, "wind", progressBar)
+		err = Loader(file, client, viper.GetString("wind_name"), progressBar, fake)
 
 	},
 }

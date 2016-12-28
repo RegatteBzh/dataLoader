@@ -41,4 +41,15 @@ func main() {
 func init() {
 	mainCommand.AddCommand(etopo.MainCmd)
 	mainCommand.AddCommand(wind.MainCmd)
+
+	flags := mainCommand.Flags()
+
+	flags.String("redis-host", "localhost", "Redis hostname")
+	viper.BindPFlag("redis_host", flags.Lookup("redis-host"))
+
+	flags.String("redis-port", "6379", "Redis port")
+	viper.BindPFlag("redis_port", flags.Lookup("redis-port"))
+
+	flags.String("redis-password", "", "Redis password")
+	viper.BindPFlag("redis_password", flags.Lookup("redis-password"))
 }
