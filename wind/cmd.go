@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	redis "gopkg.in/redis.v4"
+
 	"github.com/regattebzh/dataLoader/database"
 	"github.com/sethgrid/multibar"
 	"github.com/spf13/cobra"
@@ -27,11 +29,16 @@ var MainCmd = &cobra.Command{
 	Use:   "wind <path>",
 	Short: "Load wind forecast",
 	Run: func(cmd *cobra.Command, args []string) {
+		var client *redis.Client
 
 		fake := viper.GetBool("fake")
 
-		client := database.Open()
-		defer client.Close()
+		if !fake {
+			client = database.Open()
+			defer client.Close()
+		} else {
+			fmt.Printf("Fake mode.\n")
+		}
 
 		if len(args) == 0 {
 			log.Fatal("Missing file")
@@ -53,8 +60,6 @@ var MainCmd = &cobra.Command{
 
 		if !fake {
 			go progressBars.Listen()
-		} else {
-			fmt.Printf("Fake mode.\n")
 		}
 
 		err = Loader(file, client, viper.GetString("wind_name"), progressBar, fake)

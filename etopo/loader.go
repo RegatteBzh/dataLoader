@@ -20,9 +20,8 @@ const DATASIZE = 2 // sizeof int16
 func Loader(file io.Reader, width int, height int, c *redis.Client, redisName string, threshold int16, progressBar multibar.ProgressFunc, fake bool) (err error) {
 	fileLine := make([]byte, width*DATASIZE)
 
-	c.Del(redisName)
-
 	if !fake {
+		c.Del(redisName)
 		progressBar(0)
 	}
 
@@ -40,9 +39,10 @@ func Loader(file io.Reader, width int, height int, c *redis.Client, redisName st
 			log.Fatal("Byte to int16 failed\n", err)
 		}
 
+		lat := 90 - float64(180)*float64(line)/float64(height-1)
+
 		for column, altitude := range data {
-			lat := 90 - float64(180)*float64(line)/float64(height-1)
-			if /*altitude > threshold &&*/ lat >= -85 && lat <= 85 {
+			if altitude > threshold && lat >= -85 && lat <= 85 {
 				lon := float64(360)*float64(column)/float64(width-1) - 180
 				loc := redis.GeoLocation{
 					Longitude: lon,

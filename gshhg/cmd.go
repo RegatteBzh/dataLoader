@@ -1,4 +1,4 @@
-package etopo
+package gshhg
 
 import (
 	"fmt"
@@ -16,24 +16,19 @@ import (
 func init() {
 	flags := MainCmd.Flags()
 
-	flags.Int64("etopo-threshold", -5, "Altitude for ground limit in meter")
-	viper.BindPFlag("etopo_threshold", flags.Lookup("etopo-threshold"))
-
-	flags.String("etopo-name", "etopo", "Redis key name to store data")
-	viper.BindPFlag("etopo_name", flags.Lookup("etopo-name"))
-
 	flags.Bool("fake", false, "Do not write into redis. Just display")
 	viper.BindPFlag("fake", flags.Lookup("fake"))
+
 }
 
 // MainCmd is the main command manager
 var MainCmd = &cobra.Command{
-	Use:   "etopo <path>",
-	Short: "Load etopo 1 minute grid path",
+	Use:   "gshhg <path>",
+	Short: "Load coast data",
 	Run: func(cmd *cobra.Command, args []string) {
 		var client *redis.Client
 
-		fake := true //viper.GetBool("fake")
+		fake := viper.GetBool("fake")
 
 		if !fake {
 			client = database.Open()
@@ -51,14 +46,20 @@ var MainCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		progressBars.Printf("Loading ETOPO1 %s\n", args[0])
-		progressBar := progressBars.MakeBar(ETOTO1HEIGHT, "Etopo1")
+		progressBars.Printf("Loading Coast %s\n", args[0])
+		progressBar := progressBars.MakeBar(100, "Coast")
+
 		file, err := os.Open(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer file.Close()
 
-		err = Loader1Minute(file, client, viper.GetString("etopo_name"), int16(viper.GetInt("etopo_threshold")), progressBar, fake)
+		if !fake {
+			go progressBars.Listen()
+		}
+
+		err = Loader(file, client, progressBar, fake)
+
 	},
 }
