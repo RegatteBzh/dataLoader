@@ -32,6 +32,29 @@ type Polygon struct {
 	Points    []Point
 }
 
+// IsInside check if a point is inside a polygon
+func (polygon Polygon) IsInside(point Point) bool {
+	var firstPoint Point
+	intersection := 0
+	// inside frame ?
+	if point.Lon < polygon.West || point.Lon > polygon.East || point.Lat > polygon.North || point.Lat < polygon.South {
+		return false
+	}
+
+	for index, secondPoint := range polygon.Points {
+		if index > 0 && secondPoint.Lon != firstPoint.Lon {
+			slope := (secondPoint.Lat - firstPoint.Lat) / (secondPoint.Lon - firstPoint.Lon)
+			offset := (firstPoint.Lat*(secondPoint.Lon-firstPoint.Lon) - firstPoint.Lon*(secondPoint.Lat-firstPoint.Lat)) / (secondPoint.Lon - firstPoint.Lon)
+			projectionLat := slope*point.Lon + offset
+			if projectionLat < point.Lat {
+				intersection++
+			}
+		}
+		firstPoint = secondPoint
+	}
+	return intersection%2 == 1
+}
+
 func readPolygon(file io.Reader) (polygon Polygon, err error) {
 	header := make([]byte, 44)
 
