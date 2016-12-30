@@ -32,8 +32,23 @@ type Polygon struct {
 	Points    []Point
 }
 
+// intersection between a segment and a half segment from point to infinite
+func hasIntersection(firstPoint Point, secondPoint Point, point Point) bool {
+	if secondPoint.Lon != firstPoint.Lon {
+		slope := (secondPoint.Lat - firstPoint.Lat) / (secondPoint.Lon - firstPoint.Lon)
+		offset := (firstPoint.Lat*(secondPoint.Lon-firstPoint.Lon) - firstPoint.Lon*(secondPoint.Lat-firstPoint.Lat)) / (secondPoint.Lon - firstPoint.Lon)
+		projectionLat := slope*point.Lon + offset
+		if projectionLat < point.Lat {
+			return true
+		}
+	}
+	return false
+}
+
 // IsInside check if a point is inside a polygon
 func (polygon Polygon) IsInside(point Point) bool {
+	// If point is inside, the half segment from point to infinite pust intersect polygon
+	// odd times
 	var firstPoint Point
 	intersection := 0
 	// inside frame ?
@@ -42,13 +57,11 @@ func (polygon Polygon) IsInside(point Point) bool {
 	}
 
 	for index, secondPoint := range polygon.Points {
-		if index > 0 && secondPoint.Lon != firstPoint.Lon {
-			slope := (secondPoint.Lat - firstPoint.Lat) / (secondPoint.Lon - firstPoint.Lon)
-			offset := (firstPoint.Lat*(secondPoint.Lon-firstPoint.Lon) - firstPoint.Lon*(secondPoint.Lat-firstPoint.Lat)) / (secondPoint.Lon - firstPoint.Lon)
-			projectionLat := slope*point.Lon + offset
-			if projectionLat < point.Lat {
-				intersection++
-			}
+		if index < 0 {
+			firstPoint = polygon.Points[len(polygon.Points)-1]
+		}
+		if hasIntersection(firstPoint, secondPoint, point) {
+			intersection++
 		}
 		firstPoint = secondPoint
 	}
