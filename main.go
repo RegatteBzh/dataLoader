@@ -5,6 +5,7 @@ import (
 
 	"github.com/regattebzh/dataLoader/etopo"
 	"github.com/regattebzh/dataLoader/gshhg"
+	"github.com/regattebzh/dataLoader/polar"
 	"github.com/regattebzh/dataLoader/wind"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,6 +44,7 @@ func init() {
 	mainCommand.AddCommand(etopo.MainCmd)
 	mainCommand.AddCommand(wind.MainCmd)
 	mainCommand.AddCommand(gshhg.MainCmd)
+	mainCommand.AddCommand(polar.MainCmd)
 
 	flags := mainCommand.Flags()
 
