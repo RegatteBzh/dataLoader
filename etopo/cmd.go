@@ -59,6 +59,10 @@ var MainCmd = &cobra.Command{
 		}
 		defer file.Close()
 
+		if !fake {
+			go progressBars.Listen()
+		}
+
 		err = Loader1Minute(file, client, viper.GetString("etopo_name"), int16(viper.GetInt("etopo_threshold")), progressBar, fake)
 	},
 }

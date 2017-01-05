@@ -66,6 +66,10 @@ func loadAllPolars(pathName string, redisName string, shipName string, fake bool
 	progressBars.Printf("Loading Polars (%s) %s\n", shipName, pathName)
 	progressBar := progressBars.MakeBar(180, "polar_"+shipName)
 
+	if !fake {
+		go progressBars.Listen()
+	}
+
 	for _, f := range files {
 		match := filter.FindStringSubmatch(f.Name())
 		if len(match) > 0 {
@@ -75,7 +79,7 @@ func loadAllPolars(pathName string, redisName string, shipName string, fake bool
 				log.Fatal(err)
 			}
 			defer file.Close()
-			loader(file, client, redisName+"_"+shipName+"_"+dic[match[1]], progressBar, fake)
+			loadSail(file, client, redisName+"_"+shipName+"_"+dic[match[1]], progressBar, fake)
 		}
 	}
 

@@ -19,6 +19,7 @@ type Polar struct {
 
 // SailCharacteristic is the characteristic of a sail
 type SailCharacteristic struct {
+	Name   string
 	Winds  []float64
 	Polars []Polar
 }
@@ -27,9 +28,19 @@ func knotToMeter(knot float64) float64 {
 	return knot * float64(0.514444)
 }
 
-func loader(csvFile io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc, fake bool) error {
+func loadSail(csvFile io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc, fake bool) error {
+	sail, err := loader(csvFile, redisName, progressBar, fake)
 
-	fmt.Printf("%s\n", redisName)
+	fmt.Printf("%v+\n", sail)
+
+	return err
+}
+
+func loader(csvFile io.Reader, redisName string, progressBar multibar.ProgressFunc, fake bool) (sailChar SailCharacteristic, err error) {
+
+	sailChar = SailCharacteristic{
+		Name: redisName,
+	}
 
 	reader := csv.NewReader(csvFile)
 	reader.Comma = ';'
@@ -40,21 +51,20 @@ func loader(csvFile io.Reader, c *redis.Client, redisName string, progressBar mu
 		log.Fatal(err)
 	}
 
-	fmt.Printf("WindLevel:\n")
-	for _, wind := range csvData[0][1:] {
+	sailChar.Winds = make([]float64, len(csvData[0]))
+	for windIndex, wind := range csvData[0][1:] {
 		windLevel, err := strconv.ParseFloat(wind, 32)
 		if err != nil {
 			log.Fatal("Error parsing wind data")
 		}
 		// knot to m/s conversion
-		windLevel = knotToMeter(windLevel)
-
-		fmt.Printf("%f ", windLevel)
+		sailChar.Winds[windIndex] = knotToMeter(windLevel)
 	}
 
-	for index, polarSample := range csvData {
+	sailChar.Polars = make([]Polar, len(csvData)-1) // ignore first line
+	for angleIndex, polarSample := range csvData {
 		//skip the firt record
-		if index == 0 {
+		if angleIndex == 0 {
 			continue
 		}
 
@@ -62,21 +72,25 @@ func loader(csvFile io.Reader, c *redis.Client, redisName string, progressBar mu
 		if err != nil {
 			log.Fatal("Error parsing wind angle")
 		}
-		fmt.Printf("Angle: %f : ", angle)
 
-		for i, speed := range polarSample {
-			if i > 0 {
-				newPolar, err := strconv.ParseFloat(speed, 32)
+		newPolar := Polar{
+			Angle: angle,
+			Speed: make([]float64, len(polarSample)-1), // ignore first column
+		}
+
+		for speedIndex, speed := range polarSample {
+			if speedIndex > 0 {
+				newPolarVal, err := strconv.ParseFloat(speed, 32)
 				if err != nil {
 					log.Fatal("Error parsing wind speed")
 				}
 				// knot to m/s conversion
-				newPolar = knotToMeter(newPolar)
-
-				fmt.Printf("%f ", newPolar)
+				newPolar.Speed[speedIndex-1] = knotToMeter(newPolarVal)
 			}
 		}
+		sailChar.Polars[angleIndex-1] = newPolar
+		progressBar(int(angle))
 	}
 
-	return nil
+	return
 }
