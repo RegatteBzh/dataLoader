@@ -28,10 +28,43 @@ func knotToMeter(knot float64) float64 {
 	return knot * float64(0.514444)
 }
 
+func (sailChar SailCharacteristic) pushWindsRedis(c *redis.Client, redisName string) (err error) {
+	c.Del(redisName)
+	args := make([]interface{}, len(sailChar.Winds))
+	for i, value := range sailChar.Winds {
+		args[i] = interface{}(value)
+	}
+	cmd := c.LPush(redisName, args...)
+	return cmd.Err()
+}
+
+func (sailChar SailCharacteristic) pushAnglesRedis(c *redis.Client, redisName string) (err error) {
+	c.Del(redisName)
+	args := make([]interface{}, len(sailChar.Polars))
+	for i, value := range sailChar.Polars {
+		args[i] = interface{}(value.Angle)
+	}
+	cmd := c.LPush(redisName, args...)
+	return cmd.Err()
+}
+
 func loadSail(csvFile io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc, fake bool) error {
 	sail, err := loader(csvFile, redisName, progressBar, fake)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	fmt.Printf("%v+\n", sail)
+	if !fake {
+		if err := sail.pushWindsRedis(c, redisName+"_winds"); err != nil {
+			log.Fatal(err)
+		}
+		if err := sail.pushAnglesRedis(c, redisName+"_angles"); err != nil {
+			log.Fatal(err)
+		}
+		/* TODO : store all polars */
+	} else {
+		fmt.Printf("%v+\n", sail)
+	}
 
 	return err
 }
@@ -91,6 +124,7 @@ func loader(csvFile io.Reader, redisName string, progressBar multibar.ProgressFu
 		sailChar.Polars[angleIndex-1] = newPolar
 		progressBar(int(angle))
 	}
+	progressBar(180)
 
 	return
 }
