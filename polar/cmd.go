@@ -101,7 +101,15 @@ func loadAllPolars(pathName string, redisName string, shipName string, fake bool
 	}
 
 	for _, elt := range toLoad {
-		loadSailToRedis(elt.File, client, elt.Name, elt.ProgressBar, fake)
+		sail, err := csvLoader(elt.File, redisName, elt.ProgressBar, fake)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = sail.saveRedis(client, elt.Name, elt.ProgressBar, fake)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return
@@ -115,13 +123,14 @@ var MainCmd = &cobra.Command{
 
 		fake := viper.GetBool("fake")
 		redisName := viper.GetString("polar_name")
-		pathName := args[0]
-		shipName := args[1]
 
 		if len(args) < 2 {
 			log.Fatal(errors.New("Not enough arguments."))
+		} else {
+			pathName := args[0]
+			shipName := args[1]
+			loadAllPolars(pathName, redisName, shipName, fake)
 		}
 
-		loadAllPolars(pathName, redisName, shipName, fake)
 	},
 }
