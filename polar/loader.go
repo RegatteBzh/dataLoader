@@ -28,7 +28,7 @@ func knotToMeter(knot float64) float64 {
 	return knot * float64(0.514444)
 }
 
-func loadSail(csvFile io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc, fake bool) error {
+func loadSailToRedis(csvFile io.Reader, c *redis.Client, redisName string, progressBar multibar.ProgressFunc, fake bool) error {
 	sail, err := loader(csvFile, redisName, progressBar, fake)
 	if err != nil {
 		log.Fatal(err)

@@ -45,6 +45,10 @@ func init() {
 	dic["64"] = "gennaker"
 }
 
+func getRedisName(prefix string, shipName string, sailName string) string {
+	return prefix + "_" + shipName + "_" + sailName
+}
+
 func loadAllPolars(pathName string, redisName string, shipName string, fake bool) (err error) {
 	var client *redis.Client
 
@@ -82,7 +86,7 @@ func loadAllPolars(pathName string, redisName string, shipName string, fake bool
 				log.Fatal(err)
 			}
 			defer file.Close()
-			name := redisName + "_" + shipName + "_" + dic[match[1]]
+			name := getRedisName(redisName, shipName, dic[match[1]])
 			newLoader := loadStruct{
 				File:        file,
 				ProgressBar: progressBars.MakeBar(180, name),
@@ -97,7 +101,7 @@ func loadAllPolars(pathName string, redisName string, shipName string, fake bool
 	}
 
 	for _, elt := range toLoad {
-		loadSail(elt.File, client, elt.Name, elt.ProgressBar, fake)
+		loadSailToRedis(elt.File, client, elt.Name, elt.ProgressBar, fake)
 	}
 
 	return
