@@ -6,3 +6,6 @@ Have a sane version of Redis v4, that is running
 
 ## Usage
 ``./dataLoader --help``
+
+## Archi
+![Archi](archi/regatte.png "Global architecture")
